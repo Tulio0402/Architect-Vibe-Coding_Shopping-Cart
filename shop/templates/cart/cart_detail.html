@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>您的購物車</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th>商品</th>
+            <th>數量</th>
+            <th>移除</th>
+            <th>單價</th>
+            <th>小計</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in cart %}
+        {% with product=item.product %}
+        <tr>
+            <td>{{ product.name }}</td>
+            <td>
+                <form action="{% url 'cart:cart_add' product.id %}" method="post">
+                    {% csrf_token %}
+                    {{ item.update_quantity_form.quantity }}
+                    {{ item.update_quantity_form.override }}
+                    <input type="submit" value="更新" class="btn btn-sm btn-outline-secondary">
+                </form>
+            </td>
+            <td>
+                <form action="{% url 'cart:cart_remove' product.id %}" method="post">
+                    {% csrf_token %}
+                    <input type="submit" value="移除" class="btn btn-sm btn-danger">
+                </form>
+            </td>
+            <td>${{ item.price }}</td>
+            <td>${{ item.total_price }}</td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+        <tr class="table-dark">
+            <td colspan="4">總計</td>
+            <td>${{ cart.get_total_price }}</td>
+        </tr>
+    </tbody>
+</table>
+<a href="{% url 'shop:product_list' %}" class="btn btn-secondary">繼續購物</a>
+{% endblock %}
