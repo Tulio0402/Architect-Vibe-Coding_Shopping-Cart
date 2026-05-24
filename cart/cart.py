@@ -1,6 +1,6 @@
 from decimal import Decimal
 from django.conf import settings
-from shop.models import Product
+from shop.models import Product, Coupon
 
 class Cart:
     def __init__(self, request):
@@ -9,6 +9,8 @@ class Cart:
         if not cart:
             cart = self.session[settings.CART_SESSION_ID] = {}
         self.cart = cart
+        # 讀取 Session 中的折扣碼 ID
+        self.coupon_id = self.session.get(settings.COUPON_SESSION_ID)
 
     def add(self, product, quantity=1, override_quantity=False):
         product_id = str(product.id)
@@ -45,9 +47,38 @@ class Cart:
     def __len__(self):
         return sum(item['quantity'] for item in self.cart.values())
 
+    @property
+    def coupon(self):
+        if self.coupon_id:
+            try:
+                return Coupon.objects.get(id=self.coupon_id)
+            except Coupon.DoesNotExist:
+                pass
+        return None
+
     def get_total_price(self):
+        """計算商品原始總價 (小計)"""
         return sum(Decimal(item['price']) * item['quantity'] for item in self.cart.values())
+
+    def get_discount(self):
+        """計算折扣金額"""
+        if self.coupon:
+            return (self.coupon.discount / Decimal('100')) * self.get_total_price()
+        return Decimal('0')
+
+    def get_shipping_fee(self):
+        """計算運費：(總價 - 折扣) >= 1000 則免運，否則 100"""
+        total_after_discount = self.get_total_price() - self.get_discount()
+        if total_after_discount >= Decimal('1000') or total_after_discount <= 0:
+            return Decimal('0')
+        return Decimal('100')
+
+    def get_grand_total(self):
+        """最終結帳金額 = 總價 - 折扣 + 運費"""
+        return self.get_total_price() - self.get_discount() + self.get_shipping_fee()
 
     def clear(self):
         del self.session[settings.CART_SESSION_ID]
+        if settings.COUPON_SESSION_ID in self.session:
+            del self.session[settings.COUPON_SESSION_ID]
         self.save()

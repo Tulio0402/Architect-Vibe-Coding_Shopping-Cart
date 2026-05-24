@@ -41,5 +41,31 @@
         </tr>
     </tbody>
 </table>
-<a href="{% url 'shop:product_list' %}" class="btn btn-secondary">繼續購物</a>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <h4>套用折扣碼</h4>
+        <form action="{% url 'cart:apply_coupon' %}" method="post" class="d-flex">
+            {% csrf_token %}
+            {{ coupon_apply_form.code }}
+            <button type="submit" class="btn btn-primary ms-2">套用</button>
+        </form>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <p>商品小計: <span class="float-end">${{ cart.get_total_price }}</span></p>
+                {% if cart.coupon %}
+                    <p class="text-success">折扣 ({{ cart.coupon.code }} {{ cart.coupon.discount }}%): 
+                        <span class="float-end">-${{ cart.get_discount|floatformat:2 }}</span>
+                    </p>
+                {% endif %}
+                <p>運費: <span class="float-end">${{ cart.get_shipping_fee }}</span></p>
+                <hr>
+                <h3>總計: <span class="float-end text-danger">${{ cart.get_grand_total|floatformat:2 }}</span></h3>
+            </div>
+        </div>
+    </div>
+</div>
+<a href="{% url 'shop:product_list' %}" class="btn btn-secondary mt-3">繼續購物</a>
 {% endblock %}

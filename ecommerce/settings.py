@@ -73,3 +73,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # 購物車 Session ID
 CART_SESSION_ID = 'cart'
+
+# 在檔案末尾新增
+COUPON_SESSION_ID = 'coupon_id'
